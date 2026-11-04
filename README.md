@@ -1,4 +1,3 @@
-# 📊 Executive Summary & Strategic Business Recommendations
 **Dự án:** Phân tích doanh thu bán buôn phụ tùng xe máy (Tháng 6 - Tháng 8/2021)  
 **Phạm vi:** 3 Kho hàng (`Central`, `North`, `West`) | Khách hàng bán buôn (`Wholesale`)
 
