@@ -1,39 +1,110 @@
-**Dự án:** Phân tích doanh thu bán buôn phụ tùng xe máy (Tháng 6 - Tháng 8/2021)  
-**Phạm vi:** 3 Kho hàng (`Central`, `North`, `West`) | Khách hàng bán buôn (`Wholesale`)
+# Analyzing Motorcycle Part Sales with SQL
 
----
+An end-to-end SQL analysis of a motorcycle parts retailer and wholesaler: which product lines earn the most, which payment methods and warehouses carry the business, and where the numbers raise questions that need follow-up. The full analysis, queries and written findings are in [`motorcycle_sales_analysis.ipynb`](motorcycle_sales_analysis.ipynb).
 
-## 1. Tóm tắt kết quả phân tích (Key Findings)
+## Business questions
 
-Dựa trên dữ liệu doanh thu thuần ($Net\_Revenue = \sum Total - \sum Payment\_Fee$), hiệu quả kinh doanh bán buôn trong 3 tháng ghi nhận các đặc điểm then chốt:
+| Stakeholder | Question |
+|---|---|
+| Board of Directors | What is the wholesale net revenue of each product line, by month and warehouse? |
+| Finance | Which payment method earns the most net revenue for each warehouse in each month? |
+| Marketing | What are the three most ordered product lines for retail and for wholesale customers? |
+| Operations | How is work distributed across warehouses, and is there an anomaly at the West warehouse? |
 
-* **Trụ cột doanh thu chính:**
-  * **Engine** và **Frame & body** là hai nhóm mang lại doanh thu đột phá nhất trong quý, đạt đỉnh vào tháng 8 tại kho **Central** (Engine đạt **$9,433.48**, Frame & body đạt **$8,571.50**).
-  * **Suspension & traction** duy trì dòng tiền rất ổn định ở cả 3 tháng tại hai kho Central và North (doanh thu dao động từ $3,200 đến gần $8,000/tháng).
-* **Hiệu suất hoạt động phân hóa mạnh giữa các kho:**
-  * **Kho Central (Trung tâm):** Đóng vai trò hạt nhân, chiếm tỷ trọng doanh thu áp đảo ở các linh kiện cơ khí nặng và giá trị cao.
-  * **Kho North (Miền Bắc):** Đóng góp doanh thu lớn thứ hai, thể hiện thế mạnh nổi trội ở nhóm *Suspension & traction* ($7,985.17 vào tháng 6) và *Frame & body*.
-  * **Kho West (Miền Tây):** Hiệu suất thấp nhất hệ thống. Đặc biệt, kho West **hoàn toàn không phát sinh doanh số bán buôn cho dòng sản phẩm Engine** trong suốt 3 tháng, và doanh số *Electrical system* rơi xuống mức rất thấp ($444.98 vào tháng 7).
-* **Xu hướng tăng trưởng (Seasonality):**
-  * Doanh thu bán buôn có xu hướng tăng tốc mạnh vào tháng 8, đặc biệt ở nhóm phụ tùng khung sườn và động cơ, cho thấy nhu cầu bảo dưỡng, sửa chữa hoặc dự trữ phụ tùng xe máy tăng cao vào cuối mùa hè.
+## Dataset
 
----
+One table, `sales`, covering June to August 2021: 1,000 orders and 9,395 units across three warehouses (North, Central, West), retail and wholesale clients, and three payment methods (credit card, transfer, cash).
 
-## 2. Các điểm nghẽn vận hành (Operational Bottlenecks)
+| Column | Description |
+|---|---|
+| `order_number` | Unique order number |
+| `date` | Order date, June to August 2021 |
+| `warehouse` | `North`, `Central` or `West` |
+| `client_type` | `Retail` or `Wholesale` |
+| `product_line` | Type of product ordered |
+| `quantity` | Number of products ordered |
+| `unit_price` | Price per product (USD) |
+| `total` | Total price of the order (USD) |
+| `payment` | `Credit card`, `Transfer` or `Cash` |
+| `payment_fee` | Fee charged because of the payment method |
 
-1. **Lệch pha năng lực lưu kho và phân phối:** Kho West đang chịu chi phí mặt bằng/vận hành nhưng danh mục bán buôn nghèo nàn, bỏ lỡ hoàn toàn dòng hàng giá trị cao nhất (Engine).
-2. **Xói mòn biên lợi nhuận do chi phí thanh toán (`payment_fee`):** Với các đơn hàng bán buôn giá trị hàng nghìn USD, việc khách hàng thanh toán qua Credit Card làm phát sinh tỷ lệ phí lớn, trực tiếp làm giảm lợi nhuận ròng của công ty.
-3. **Mặt hàng phụ tùng nhỏ (`Miscellaneous`) phân tán:** Doanh thu phân tán đều nhưng giá trị đơn hàng nhỏ, làm tăng chi phí bốc dỡ và xử lý đơn hàng tại kho.
+**Net revenue** is calculated as `total - payment_fee`.
 
----
+## Key findings
 
-## 3. Đề xuất giải pháp chiến lược (Actionable Solutions)
+### 1. Wholesale drives volume
 
-### A. Tối ưu hóa Kho vận & Quản trị Tồn kho (Logistics & Inventory)
-* **Tái cấu trúc danh mục kho West:** Khảo sát nhu cầu thị trường khu vực phía Tây; nếu thị trường có nhu cầu động cơ, cần bổ sung tồn kho an toàn (Safety Stock) cho dòng *Engine*. Nếu nhu cầu bán buôn thực tế thấp, chuyển đổi kho West thành trung tâm gom hàng/bán lẻ phụ kiện nhẹ (*Miscellaneous*, *Breaking system*) để tối ưu diện tích.
-* **Chiến lược phân bổ ABC (Slotting Optimization) tại Central & North:** Ưu tiên vị trí lưu trữ gần khu vực xuất nhập (Fast-picking area) cho *Engine*, *Frame & body*, và *Suspension & traction* để rút ngắn lead time xử lý đơn sỉ lớn.
-* **Kế hoạch dự trữ đón đầu mùa vụ:** Thiết lập kế hoạch nhập hàng cơ khí nặng từ tháng 5–6 nhằm chủ động nguồn cung ứng cho đợt cao điểm tháng 8.
+Wholesale is 22.5% of orders but 55% of all units. A wholesale order averages 21 to 24 units, compared with about 5 for retail. Central handles 48% of all units, North 35% and West 17%.
 
-### B. Chính sách Thương mại & Giảm thiểu Chi phí Giao dịch (Finance & Commercial)
-* **Ưu đãi chuyển dịch phương thức thanh toán:** Áp dụng mức chiết khấu thương mại 1% - 1.5% cho các đơn hàng bán buôn thanh toán bằng **Chuyển khoản ngân hàng (Bank Transfer)** hoặc tiền mặt, qua đó loại bỏ phí quẹt thẻ tín dụng (thường từ 2% - 3%).
-* **Gói giải pháp bán chéo (Bundling Strategy):** Thiết lập chính sách bán kèm (bundle) dòng *Miscellaneous* và *Electrical system* với các đơn hàng lớn của dòng *Engine* hoặc *Frame & body* để kích cầu phụ tùng phụ trợ.
+<img width="1440" height="864" alt="image" src="https://github.com/user-attachments/assets/dc3437b9-f52f-4312-a9d8-f19180c6d521" />
+
+
+### 2. Revenue is concentrated in three product lines
+
+Suspension & traction, Frame & body and Electrical system generate 64% of net revenue (ABC class A). Braking system and Engine are close to each other in revenue, and Engine sits just above the 90% line.
+
+<img width="1440" height="864" alt="image" src="https://github.com/user-attachments/assets/3d6e1a89-6024-4a18-a95d-92fd3f5682b1" />
+
+
+### 3. Units and revenue tell different stories
+
+Braking system is the second most ordered line (2,130 units) but earns the least per unit (about 18 USD). Engine sells only 627 units yet earns about 60.5 USD per unit, roughly twice the network average of 30.8 USD.
+
+<img width="1440" height="864" alt="image" src="https://github.com/user-attachments/assets/d5b81782-b095-4acc-8492-e24e6cafc448" />
+
+
+### 4. Transfer leads every warehouse, but West is declining
+
+Transfer is the top payment method by net revenue in all nine warehouse-month combinations. Between June and August, Transfer revenue grew 34% at Central and 38% at North, but fell 25% at West.
+
+<img width="1440" height="864" alt="image" src="https://github.com/user-attachments/assets/691a263d-63c2-4a3c-a90a-358c028f8f28" />
+
+
+### 5. Most ordered product lines by client type
+
+| Client type | Rank | Product line | Units |
+|---|---|---|---|
+| Retail | 1 | Suspension & traction | 1,017 |
+| Retail | 2 (tie) | Braking system | 862 |
+| Retail | 2 (tie) | Electrical system | 862 |
+| Wholesale | 1 | Braking system | 1,268 |
+| Wholesale | 2 | Suspension & traction | 1,128 |
+| Wholesale | 3 | Frame & body | 932 |
+
+### 6. Open question: the West warehouse Engine gap
+
+The West warehouse has no wholesale Engine sales in any month, and its wholesale average unit price (27.49 USD) is 10 to 12% lower than at Central and North. The notebook includes diagnostic queries to tell whether this is a stock or allocation problem or simply low B2B demand for engine parts in that region. Stock and customer records would be needed to settle it.
+
+## Recommendations
+
+1. Protect stock availability of the three class A product lines.
+2. Review pricing and bundling for Braking system (high volume, low revenue per unit).
+3. Monitor Engine stock closely: low volume, highest revenue per unit, and lumpy wholesale demand.
+4. Build campaigns around Suspension & traction and Braking system, the top two in both channels.
+5. Plan Central warehouse capacity for peak days and collect capacity data to confirm any bottleneck.
+6. Investigate the West warehouse: Engine availability, falling Transfer revenue and lower wholesale pricing.
+
+## SQL techniques used
+
+- Common table expressions (CTEs) for step-by-step logic
+- Window functions: `RANK()`, `SUM() OVER`, running totals for the Pareto analysis
+- Conditional aggregation with `FILTER`
+- Date handling with `EXTRACT` and `TO_CHAR` to order months chronologically
+- Data validation queries before analysis
+
+## How to reproduce
+
+1. Open `motorcycle_sales_analysis.ipynb` in a SQL-capable notebook environment (the project was built in DataCamp Workspace) connected to a PostgreSQL database that contains the `sales` table.
+2. Run the cells in order. The validation section comes first and checks the data before any analysis.
+3. The charts in `images/` were drawn from the query results shown in the notebook.
+
+## Notes and limitations
+
+- **Fee definition:** the data dictionary describes `payment_fee` as a percentage of `total`, while net revenue here subtracts it as an amount. A diagnostic query in the notebook checks which is correct; if the column holds rates, absolute revenue figures would change slightly, though rankings are unlikely to.
+- **Short window:** three months of data limit conclusions about trends and seasonality.
+- **No cost data:** the analysis is revenue-based, not profit-based.
+- **No capacity or inventory data:** warehouse congestion and stock-out questions can only be tested indirectly.
+
+## Author
+
+[kov1cx](https://github.com/kov1cx)
